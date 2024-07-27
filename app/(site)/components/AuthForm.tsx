@@ -1,10 +1,13 @@
 'use client'
+import axios from "axios";
 import Button from "@/app/components/Button";
 import Input from "@/app/components/inputs/Input";
 import { useCallback, useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import AuthSocialButton from "./AuthSocialButton";
 import { BsGithub, BsGoogle } from "react-icons/bs";
+import { toast } from "react-hot-toast";
+import { signIn } from "next-auth/react";
 
 type Variant = 'LOGIN' | 'REGISTER';
 
@@ -32,9 +35,26 @@ const AuthForm = () => {
         setIsLoading(true);
         if (variant === 'REGISTER') {
             // Registration logic
+            axios.post('/api/register', data)
+            .catch(() => toast.error('Something went wrong') )
+            .finally(() => setIsLoading(false))
         }
         if (variant === 'LOGIN') {
-            // Login logic
+            // Login
+            signIn('credentials', {
+                ...data,
+                redirect: false
+            })
+            .then((callback)=>{
+                if (callback?.error){
+                    toast.error('Invalid Credentials')
+                }
+
+                if (callback?.ok && !callback?.error) {
+                    toast.success('Logged in successfully')
+                }
+            })
+            .finally(()=> setIsLoading(false));
         }
     }
 
@@ -50,11 +70,11 @@ const AuthForm = () => {
                     {variant === 'REGISTER' && (
 
                     
-                    <Input label="Name" id="name" register={register} errors={errors} />
+                    <Input label="Name" id="name" register={register} errors={errors} disabled={isLoading}/>
                     //{/* Add other inputs here */}
                 )}
-                <Input label="Email" id="email" register={register} type="email" errors={errors} />
-                <Input label="Password" id="password" register={register} type="password" errors={errors} />
+                <Input label="Email" id="email" register={register} type="email" errors={errors} disabled={isLoading}/>
+                <Input label="Password" id="password" register={register} type="password" errors={errors} disabled={isLoading} />
                 <div>
                 <Button
                 disabled={isLoading}
